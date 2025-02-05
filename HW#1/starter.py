@@ -3,6 +3,9 @@ import random
 
 import torch
 from torch.utils.data import DataLoader, dataset
+import time
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as pyplot
 import torch.nn as nn
 from pathlib import Path
@@ -78,21 +81,19 @@ def train(model:torch.nn.Module, dataloader: DataLoader, optimizer: torch.optim.
                         verbose=False
                         )
         loss_epoch.append(loss_batch)
-        wps_epoch.append(kwargs["window"]/time_taken)
+        wps_epoch.append(kwargs["window"]*kwargs["batchsize"]/time_taken)
         percentage_epoch.append(i*100/len(dataloader))
-        if not i%10:
-            break
         if not i%500:
             print('Batch num: ', i, ' ', f"{percentage_epoch[-1]:.1f}", '%')
             print('words per second: ', f"{wps_epoch[-1]:.1f}")
             # print('Loss across the epoch: ', loss_epoch)
 
     if savename:
-        torch.save(model.state_dict(), Path(os.path.abspath(__file__)).parent / savename)
+        torch.save(model.state_dict(), Path(os.path.abspath(__file__)).parent / f"{time.strftime("%H-%M-%S")}{savename}")
     return loss_epoch, wps_epoch
 
 @time_it
-def test_model(model:torch.nn.Module, dataloader: DataLoader, optimizer: torch.optim.Optimizer, loss:torch.nn.CrossEntropyLoss, savename: str, verbose: bool = False, **kwargs):
+def test_model(model:torch.nn.Module, dataloader: DataLoader, verbose: bool = False, **kwargs):
     # implement code to split you corpus into batches, use a sliding window to construct contexts over
     # your batches (sub-corpora), you can manually replicate the functionality of datafeeder() to present 
     # training examples to you model, you can manually calculate the probability assigned to the target 
@@ -107,32 +108,14 @@ def test_model(model:torch.nn.Module, dataloader: DataLoader, optimizer: torch.o
     if verbose:
         print("model:", model)
         print("dataloader:", dataloader)
-        print("savename:", savename)
-        print("verbose:", verbose)
     print('inside train')
-    model.train()
-    loss_epoch = []
-    wps_epoch = []
-    percentage_epoch = []
+    acc_epoch = []
     for i, (prev_words , next_word) in enumerate(dataloader):
-        # prev_words: torch.Tensor = prev_words
-        # print(prev_words.device)
-        loss_batch, time_taken = train_batch(model=model,
-                        prev_words=prev_words,
-                        next_word=next_word,
-                        optimizer=optimizer,
-                        loss=loss,
-                        verbose=False
-                        )
-        loss_epoch.append(loss_batch)
-        wps_epoch.append(kwargs["window"]/time_taken)
-        percentage_epoch.append(i*100/len(dataloader))
-        if not i%500:
-            print('Batch num: ', i, ' ', f"{percentage_epoch[-1]:.1f}", '%')
-            print('words per second: ', f"{wps_epoch[-1]:.1f}")
-            # print('Loss across the epoch: ', loss_epoch)
+        preds :torch.Tensor = model(prev_words)
+        acc_batch = (preds.argmax(dim=1) == next_word).sum().item()
+        acc_epoch.append(acc_batch)
 
-    return loss_epoch, wps_epoch
+    return acc_epoch
 
 
 def main():
@@ -178,14 +161,18 @@ def main():
                    window=opt.window,
                    batchsize = opt.batchsize,
                    vocab_size=len(opt.vocab))
+    
+    if opt.loadname:
+        model.load_state_dict(torch.load((Path(os.path.abspath(__file__)).parent / opt.loadname),weights_only=True))
     if not opt.no_cuda:
         model = model.cuda()
 
     print('\tModel Made')
     print('\tMaking Dataset')
-    bengio_train = CustomBengioDataset(**{"corpus":opt.train,**vars(opt), "verbose":False,"cuda":True})
+    bengio_train = DataLoader(CustomBengioDataset(**{"corpus":opt.train,**vars(opt), "verbose":False,"cuda":True}), opt.batchsize, True)
+    bengio_test = DataLoader(CustomBengioDataset(**{"corpus":opt.test,**vars(opt), "verbose":False,"cuda":True}), opt.batchsize, True)
+    bengio_valid = DataLoader(CustomBengioDataset(**{"corpus":opt.valid,**vars(opt), "verbose":False,"cuda":True}), opt.batchsize, True)
 
-    bengio_loader = DataLoader(bengio_train, 8, True)
     print('\tDone Dataset')
     opt.optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, betas=(0.9, 0.98), eps=1e-9)
 
@@ -197,21 +184,41 @@ def main():
 
         loss_epoch, wps_epoch = train(**{
                 "model":model,
-                "dataloader":bengio_loader,
+                "dataloader":bengio_train,
                 "optimizer":opt.optimizer,
                 "loss": torch.nn.CrossEntropyLoss(),
                 **vars(opt)})
         loss_all_epochs.append(loss_epoch)
         wps_all_epochs.append(wps_epoch)
-        test_acc, wps_epoch = test_model(model,opt,-1)
-        test_all_epochs.append(test_acc)
+        acc_epoch = test_model(model,dataloader=bengio_test)
+        test_all_epochs.append(acc_epoch)
+
+    # print('loss all epochs: ', loss_all_epochs)
+    # print('acc all epochs: ', test_all_epochs)
+    # print('wps all epochs: ', wps_all_epochs)
 
 
     fig, ax = pyplot.subplots(1,3,figsize=(30,10))
+    graph_loss_each_epoch_pb(ax[0],loss_all_epochs,x_label="Batch In epoch", y_label="Loss", title=f"hyperparams: lr={opt.lr} epochs={opt.epochs} d={opt.d_model} window={opt.window}")
+    graph_loss_each_epoch_pb(ax[1],test_all_epochs,x_label="Batch In epoch", y_label="Acc", title=f"hyperparams: lr={opt.lr} epochs={opt.epochs} d={opt.d_model} window={opt.window}")
+    graph_loss_each_epoch_pb(ax[2],wps_all_epochs,x_label="Batch In epoch", y_label="WPS", title=f"hyperparams: lr={opt.lr} epochs={opt.epochs} d={opt.d_model} window={opt.window}")
+    time.time
+    pyplot.savefig(Path(os.path.abspath(__file__)).parent / f"perf_graph_{time.strftime("%Y-%m-%d_%H-%M-%S")}.png")
+    time.sleep(2)
+    # pyplot.show()
 
-    graph_loss_each_epoch_pb(ax[0,0],wps_all_epochs,x_label="Batch In epoch", y_label="Loss", title=f"hyperparams: lr={opt.lr} eps={opt.eps}")
-    graph_loss_each_epoch_pb(ax[0,1],loss_all_epochs,x_label="Batch In epoch", y_label="Acc", title=f"hyperparams: lr={opt.lr} eps={opt.eps}")
-    graph_loss_each_epoch_pb(ax[0,2],test_all_epochs,x_label="Batch In epoch", y_label="WPS", title=f"hyperparams: lr={opt.lr} eps={opt.eps}")
+
+    loss_each_epoch = [sum(loss_all_epochs[i])/len(loss_all_epochs[i]) for i in range(len(loss_all_epochs))]
+    acc_each_epoch = [sum(test_all_epochs[i])/len(test_all_epochs[i]) for i in range(len(test_all_epochs))]
+    wps_each_epoch = [sum(wps_all_epochs[i])/len(wps_all_epochs[i]) for i in range(len(wps_all_epochs))]
+    fig, ax = pyplot.subplots(1,3,figsize=(30,10))
+    graph_loss_pb(ax[0],loss_each_epoch,x_label="Epoch", y_label="Loss", title=f"hyperparams: lr={opt.lr} epochs={opt.epochs} d={opt.d_model} window={opt.window}")
+    graph_loss_pb(ax[1],acc_each_epoch,x_label="Epoch", y_label="Acc", title=f"hyperparams: lr={opt.lr} epochs={opt.epochs} d={opt.d_model} window={opt.window}")
+    graph_loss_pb(ax[2],wps_each_epoch,x_label="Epoch", y_label="WPS", title=f"hyperparams: lr={opt.lr} epochs={opt.epochs} d={opt.d_model} window={opt.window}")
+    time.time
+    pyplot.savefig(Path(os.path.abspath(__file__)).parent / f"perf_graph_{time.strftime("%Y-%m-%d_%H-%M-%S")}.png")
+    # pyplot.show()
+
 
     # examples = Path(os.path.abspath(__file__)) / ".." / "data" / "examples.txt"
 if __name__ == "__main__":
