@@ -9,12 +9,18 @@ class bengio(torch.nn.Module):
         self.loss = torch.nn.CrossEntropyLoss()
 
         #from pardo's class
+        # layers = [
+        #     nn.Embedding(vocab_size,dim),
+        #     nn.Flatten(start_dim=1),
+        #     nn.Linear(window*dim,window),
+        #     self.activation,
+        #     nn.Linear(window,vocab_size)]
+
         layers = [
             nn.Embedding(vocab_size,dim),
             nn.Flatten(start_dim=1),
-            nn.Linear(window*dim,window*3),
-            self.activation,
-            nn.Linear(window*3,vocab_size)]
+            nn.Linear(window*dim,vocab_size),
+            self.activation]
 
         self.net = nn.Sequential(*layers)
 
