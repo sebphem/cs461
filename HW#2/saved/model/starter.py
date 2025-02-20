@@ -132,18 +132,18 @@ def main():
         opt.device = torch.device("cuda:0")
     
 
-    # #make a log file???
-    # time_name = time.strftime("%y%m%d_%H%M%S")
-    # opt.time_name = time_name
-    # dir_name = "saved/%s" % (opt.dir_name)
-    # if not os.path.exists(dir_name):
-    #     os.makedirs(dir_name)
-    # source_name = sys.argv[0]
-    # dir_name = dir_name + "//"
-    # opt.dir_name = dir_name
-    # #copy the python file at benging of run time???
-    # shutil.copy(source_name,dir_name + source_name)
-    # opt.log_file = dir_name + "log_file.txt"
+    #make a log file???
+    time_name = time.strftime("%y%m%d_%H%M%S")
+    opt.time_name = time_name
+    dir_name = "saved/%s" % (opt.dir_name)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    source_name = sys.argv[0]
+    dir_name = dir_name + "//"
+    opt.dir_name = dir_name
+    #copy the python file at benging of run time???
+    shutil.copy(source_name,dir_name + source_name)
+    opt.log_file = dir_name + "log_file.txt"
 
     tokenizer : GPT2TokenizerFast = GPT2TokenizerFast.from_pretrained("gpt2")
     opt.train = read_corpus(Path('.') / 'data'/ 'wiki2.train.txt',tokenizer)
@@ -152,25 +152,24 @@ def main():
     print('first 11 tokens: ', tokenizer.decode(opt.train[0:10]))
     print('first 11 token ids: ',opt.train[0:10] )
     
-    # obs = len(opt.train)
-    # opt.vocab_size = 50257
-    # indices = torch.from_numpy(np.arange(50527))
-    # model = get_model(opt,opt.vocab_size,opt.vocab_size)
+    obs = len(opt.train)
+    opt.vocab_size = 50257
+    indices = torch.from_numpy(np.arange(50527))
+    model = get_model(opt,opt.vocab_size,opt.vocab_size)
 
-    # print('number of params: ', get_number_of_model_params(model))
+    print('number of params: ', get_number_of_model_params(model))
 
-    # optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, betas=(0.9, 0.98), eps=1e-9)
-    # if opt.SGDR == True:
-    #     opt.sched = CosineWithRestarts(opt.optimizer, T_max=opt.train_len)
+    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, betas=(0.9, 0.98), eps=1e-9)
+    if opt.SGDR == True:
+        opt.sched = CosineWithRestarts(opt.optimizer, T_max=opt.train_len)
 
-    # if opt.savename is not None:
-    #     try:
-    #         os.mkdir(opt.savename)
-    #     except:
-    #         nothing = 1
+    if opt.savename is not None:
+        try:
+            os.mkdir(opt.savename)
+        except:
+            nothing = 1
 
     train_dataset = DataLoader(CustomTransformerDataset(opt.train, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
-    print(len(train_dataset))
     test_dataset = CustomTransformerDataset(opt.test, opt.seqlen, tokenizer=tokenizer, verbose=False)
     valid_dataset = CustomTransformerDataset(opt.valid, opt.seqlen, tokenizer=tokenizer, verbose=False)
 
@@ -180,9 +179,9 @@ def main():
     opt.src_pad = 0
     opt.trg_pad = 0
 
-    # for epoch in range(opt.epochs):
-    #     train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, savepath=(Path(os.path.abspath(__file__)) / 'saved' / 'model' / f'{opt.savename}'))
-        # test_model(model,opt,-1)
+
+    train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, savepath=(Path(os.path.abspath(__file__)) / 'saved' / 'model' / f'{opt.savename}'))
+    # test_model(model,opt,-1)
 
 if __name__ == "__main__":
     main()
