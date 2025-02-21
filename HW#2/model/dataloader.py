@@ -51,7 +51,7 @@ def create_mask(tut:torch.Tensor, pad_id:int, make_masked:bool):
 
 # this is incredibly dumb
 class CustomTransformerDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset:list[int], seq_len:int, tokenizer:GPT2TokenizerFast=None,cuda = True,verbose=False, **kwargs):
+    def __init__(self, dataset:list[int], seq_len:int, tokenizer:GPT2TokenizerFast=None,cuda = False,verbose=False, window_size:int=512, **kwargs):
         self.cuda = cuda
         self.dataset = dataset
         self.seq_len = seq_len
@@ -60,12 +60,13 @@ class CustomTransformerDataset(torch.utils.data.Dataset):
 
 
     def __len__(self):
-        return len(self.dataset) - self.seq_len
+        return len(self.dataset) - (self.seq_len*2)
 
     def __getitem__(self, idx):
-        raw = self.dataset[idx:idx+self.seq_len+1]
+        raw = self.dataset[idx:(idx+self.seq_len)]
         source = torch.tensor(raw, dtype=torch.int64)
-        tgt = torch.tensor(raw, dtype=torch.int64)
+        raw_tgt = self.dataset[(idx+self.seq_len):(idx+(self.seq_len*2))]
+        tgt = torch.tensor(raw_tgt, dtype=torch.int64)
         if self.cuda:
             source = source.cuda()
             tgt = tgt.cuda()
