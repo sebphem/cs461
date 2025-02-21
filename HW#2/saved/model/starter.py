@@ -49,7 +49,7 @@ def get_model(opt : argparse.Namespace, src_vocab_size:int, trg_vocab_size:int) 
 def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim.Adam,loss_func: F.cross_entropy, epoch:int, batchsize:int, savepath:Path=None):
     
     print("training model...")
-    model.train()
+    # model.train()
     
     # write code to:
     #  1. create a nopeak mask
@@ -64,29 +64,30 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
     #  SEE trainer.py for examples of each of the above
     with tqdm(total=len(dataloader), desc='Training Progress') as progress:
         for i, (src, tgt) in enumerate(dataloader):
-            src : torch.Tensor = src
-            tgt : torch.Tensor = tgt
-            # print('src view:', src.size())
-            # print('tgt view:', tgt.size())
-            srcmask = create_mask(src, 0, make_masked=False)
-            #remove frist token from the model because the output of the model is just going to be predicting it anyways
-            input_target = tgt[:, :-1]
-            tgtmask = create_mask(input_target, 0, make_masked=True)
+            # print(i)
+        #     src : torch.Tensor = src
+        #     tgt : torch.Tensor = tgt
+        #     # print('src view:', src.size())
+        #     # print('tgt view:', tgt.size())
+        #     srcmask = create_mask(src, 0, make_masked=False)
+        #     #remove frist token from the model because the output of the model is just going to be predicting it anyways
+        #     input_target = tgt[:, :-1]
+        #     tgtmask = create_mask(input_target, 0, make_masked=True)
             
-            preds : torch.Tensor = model(src=src,trg=input_target,src_mask=srcmask, trg_mask=tgtmask)
-            preds = preds.view(-1, preds.size(-1))
-            true_output = tgt[:, 1:].contiguous().view(-1)
-            loss = loss_func(preds, true_output)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+        #     preds : torch.Tensor = model(src=src,trg=input_target,src_mask=srcmask, trg_mask=tgtmask)
+        #     preds = preds.view(-1, preds.size(-1))
+        #     true_output = tgt[:, 1:].contiguous().view(-1)
+        #     loss = loss_func(preds, true_output)
+        #     optimizer.zero_grad()
+        #     loss.backward()
+        #     optimizer.step()
 
 
-            progress.set_description(f'Epoch: {epoch}')
-            progress.update(i)
-            progress.set_postfix({'loss':loss.item()})
-        if savepath:
-            torch.save(model.state_dict(), f"{str(savepath)}{time.strftime("%H-%M-%S")}" )
+        #     progress.set_description(f'Epoch: {epoch}')
+            progress.update(1)
+        #     progress.set_postfix({'loss':loss.item()})
+        # if savepath:
+        #     torch.save(model.state_dict(), f"{str(savepath)}{time.strftime('%H-%M-%S')}" )
     # nopeak_mask =
 
 
@@ -131,7 +132,6 @@ def main():
     parser.add_argument('-printevery', type=int, default=100)
     parser.add_argument('-lr', type=int, default=0.00001)
     parser.add_argument('-seqlen', type=int, default=512)
-    parser.add_argument('-threshold', type=int, default=3)
     parser.add_argument('-savename', type=str)
     parser.add_argument('-loadname', type=str)
     parser.add_argument('-tied', type=int, default=1)
@@ -158,7 +158,7 @@ def main():
     dir_name = dir_name + "//"
     opt.dir_name = dir_name
     #copy the python file at benging of run time???
-    shutil.copy(source_name,dir_name + source_name)
+    shutil.copy(source_name,dir_name + source_name) 
     opt.log_file = dir_name + "log_file.txt"
 
     tokenizer : GPT2TokenizerFast = GPT2TokenizerFast.from_pretrained("gpt2")
@@ -171,13 +171,15 @@ def main():
     obs = len(opt.train)
     opt.vocab_size = 50257
     indices = torch.from_numpy(np.arange(50527))
-    model = get_model(opt,opt.vocab_size,opt.vocab_size)
+    # model = get_model(opt,opt.vocab_size,opt.vocab_size)
 
-    print('number of params: ', get_number_of_model_params(model))
+    model= 'kevin'
+    optimizer='smelvin'
+    # print('number of params: ', get_number_of_model_params(model))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, betas=(0.9, 0.98), eps=1e-9)
-    if opt.SGDR == True:
-        opt.sched = CosineWithRestarts(opt.optimizer, T_max=opt.train_len)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, betas=(0.9, 0.98), eps=1e-9)
+    # if opt.SGDR == True:
+    #     opt.sched = CosineWithRestarts(opt.optimizer, T_max=opt.train_len)
 
     if opt.savename is not None:
         try:
@@ -185,14 +187,14 @@ def main():
         except:
             nothing = 1
 
-    train_dataset = DataLoader(CustomTransformerDataset(opt.train, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
+    train_dataset = DataLoader(CustomTransformerDataset(opt.train, opt.seqlen, tokenizer=tokenizer, cuda=(not opt.no_cuda), verbose=False),batch_size=opt.batchsize)
     print(len(train_dataset))
     test_dataset = DataLoader(CustomTransformerDataset(opt.test, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
     valid_dataset = CustomTransformerDataset(opt.valid, opt.seqlen, tokenizer=tokenizer, verbose=False)
 
     
     # we're padding the dataset with the token id 0
-    # we do this when we want to span the entire dataset from before 
+    # we do this when we want to span the entire dataset from before
     opt.src_pad = 0
     opt.trg_pad = 0
 
