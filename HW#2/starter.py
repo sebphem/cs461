@@ -83,7 +83,7 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
 
 
             progress.set_description(f'Epoch: {epoch}')
-            progress.update(i*batchsize)
+            progress.update(i)
             progress.set_postfix({'loss':loss.item()})
         if savepath:
             torch.save(model.state_dict(), f"{str(savepath)}{time.strftime("%H-%M-%S")}" )

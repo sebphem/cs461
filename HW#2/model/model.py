@@ -197,7 +197,7 @@ class Encoder(nn.Module):
         for i in range(self.N):
             x = self.layers[i](x, mask)
         return self.norm(x)
-    
+
 class Decoder(nn.Module):
     def __init__(self, vocab_size, d_model, N, heads, dropout):
         super().__init__()
@@ -219,6 +219,7 @@ class Transformer(nn.Module):
         self.encoder = Encoder(src_vocab, d_model, N, heads, dropout)
         self.decoder = Decoder(trg_vocab, d_model, N, heads, dropout)
         self.out = nn.Linear(d_model, trg_vocab)
+        self.out.weight = self.decoder.embed.embed.weight
     def forward(self, src, trg, src_mask, trg_mask):
         e_outputs = self.encoder(src, src_mask)
         # print("DECODER")

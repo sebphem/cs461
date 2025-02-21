@@ -76,4 +76,3 @@ class CustomTransformerDataset(torch.utils.data.Dataset):
             print('masked: ', )
         #have two different tensors for now
         return source, tgt
-        

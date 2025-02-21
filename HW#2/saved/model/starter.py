@@ -11,6 +11,7 @@ import pickle
 from tqdm import tqdm
 # from torchtext.legacy import data
 # from model.masks import nopeak_mask
+from torcheval.metrics.text import Perplexity
 from model.timer import time_it
 from pathlib import Path
 import torch
@@ -82,21 +83,36 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
 
 
             progress.set_description(f'Epoch: {epoch}')
-            progress.update(i*batchsize)
+            progress.update(i)
             progress.set_postfix({'loss':loss.item()})
         if savepath:
             torch.save(model.state_dict(), f"{str(savepath)}{time.strftime("%H-%M-%S")}" )
     # nopeak_mask =
 
 
-
-def test_model(model, opt):
+@time_it
+def test_model(model, dataloader: DataLoader, verbose=False):
     print("testing model...")
     model.eval()
-    
-    # write code to generate perplexity of test set
-    
+    if verbose:
+        print("model:", model)
+        print("dataloader:", dataloader)
+    print('inside perplexity')
+    model.eval()
+    metric = Perplexity(ignore_index=0,device='cuda:0')
+    for i, (src, tgt) in enumerate(dataloader):
+        src : torch.Tensor = src
+        tgt : torch.Tensor = tgt
+        srcmask = create_mask(src, 0, make_masked=False)
+        input_target = tgt[:, :-1]
+        tgtmask = create_mask(input_target, 0, make_masked=True)
+        preds : torch.Tensor = model(src=src,trg=input_target,src_mask=srcmask, trg_mask=tgtmask)
+        true_output = tgt[:, 1:].contiguous()
+        metric.update(preds,true_output)
+    if not i%1000:
+        print('Batch num: ', i, ' ', f"{i*100/len(dataloader):.1f}", '%')
     model.train()
+    return metric.compute().cpu().item()
 
 def main():
     
@@ -170,7 +186,8 @@ def main():
             nothing = 1
 
     train_dataset = DataLoader(CustomTransformerDataset(opt.train, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
-    test_dataset = CustomTransformerDataset(opt.test, opt.seqlen, tokenizer=tokenizer, verbose=False)
+    print(len(train_dataset))
+    test_dataset = DataLoader(CustomTransformerDataset(opt.test, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
     valid_dataset = CustomTransformerDataset(opt.valid, opt.seqlen, tokenizer=tokenizer, verbose=False)
 
     
@@ -179,9 +196,9 @@ def main():
     opt.src_pad = 0
     opt.trg_pad = 0
 
-
-    train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, savepath=(Path(os.path.abspath(__file__)) / 'saved' / 'model' / f'{opt.savename}'))
-    # test_model(model,opt,-1)
+    for epoch in range(opt.epochs):
+        train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, savepath=(Path(os.path.abspath(__file__)) / 'saved' / 'model' / f'{opt.savename}'))
+        test_model(model,test_dataset)
 
 if __name__ == "__main__":
     main()
