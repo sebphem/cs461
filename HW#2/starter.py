@@ -103,7 +103,7 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
 
 
 @time_it
-def test_model(model, dataloader: DataLoader, verbose=False):
+def test_model(model, dataloader: DataLoader, device:str, verbose=False):
     print("testing model...")
     model.eval()
     if verbose:
@@ -113,8 +113,8 @@ def test_model(model, dataloader: DataLoader, verbose=False):
     model.eval()
     metric = Perplexity(ignore_index=0,device='cuda:0')
     for i, (src, tgt) in enumerate(dataloader):
-        src : torch.Tensor = src
-        tgt : torch.Tensor = tgt
+        src : torch.Tensor = src.to(device)
+        tgt : torch.Tensor = tgt.to(device)
         srcmask = create_mask(src, 0, make_masked=False)
         input_target = tgt[:, :-1]
         tgtmask = create_mask(input_target, 0, make_masked=True)
@@ -200,7 +200,7 @@ def main():
     train_dataset = DataLoader(CustomTransformerDataset(opt.train, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
     print(len(train_dataset))
     test_dataset = DataLoader(CustomTransformerDataset(opt.test, opt.seqlen, tokenizer=tokenizer, verbose=False),batch_size=opt.batchsize)
-    valid_dataset = CustomTransformerDataset(opt.valid, opt.seqlen, tokenizer=tokenizer, verbose=False)
+    # valid_dataset = CustomTransformerDataset(opt.valid, opt.seqlen, tokenizer=tokenizer, verbose=False)
 
     
     # we're padding the dataset with the token id 0
@@ -210,7 +210,7 @@ def main():
     perplexity = []
     for epoch in range(opt.epochs):
         train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, device=opt.device, savepath=(Path(os.path.abspath(__file__)).parent / 'saved' / 'model' / f'{opt.savename}'))
-        perplexity.append(test_model(model,test_dataset))
+        perplexity.append(test_model(model,test_dataset, device=opt.device))
         print('current perplexity: ', perplexity)
 
 if __name__ == "__main__":
