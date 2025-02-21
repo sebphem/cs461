@@ -86,7 +86,7 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
             progress.update(i)
             progress.set_postfix({'loss':loss.item()})
         if savepath:
-            torch.save(model.state_dict(), f"{str(savepath)}{time.strftime("%H-%M-%S")}" )
+            torch.save(model.state_dict(), f"{str(savepath)}{time.strftime('%H-%M-%S')}" )
     # nopeak_mask =
 
 
@@ -131,7 +131,6 @@ def main():
     parser.add_argument('-printevery', type=int, default=100)
     parser.add_argument('-lr', type=int, default=0.00001)
     parser.add_argument('-seqlen', type=int, default=512)
-    parser.add_argument('-threshold', type=int, default=3)
     parser.add_argument('-savename', type=str)
     parser.add_argument('-loadname', type=str)
     parser.add_argument('-tied', type=int, default=1)
@@ -158,7 +157,7 @@ def main():
     dir_name = dir_name + "//"
     opt.dir_name = dir_name
     #copy the python file at benging of run time???
-    shutil.copy(source_name,dir_name + source_name)
+    shutil.copy(source_name,dir_name + source_name) 
     opt.log_file = dir_name + "log_file.txt"
 
     tokenizer : GPT2TokenizerFast = GPT2TokenizerFast.from_pretrained("gpt2")
