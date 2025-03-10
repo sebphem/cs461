@@ -46,7 +46,7 @@ def get_model(opt : argparse.Namespace, src_vocab_size:int, trg_vocab_size:int) 
 
 
 @time_it
-def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim.Adam,loss_func: F.cross_entropy, epoch:int, batchsize:int, device:str,savepath:Path=None, verbose:bool=False):
+def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim.Adam,loss_func: F.cross_entropy, epoch:int, batchsize:int, device:str,savepath:Path=None, verbose:bool=True):
     
     print("training model...")
     model.train()
@@ -63,40 +63,34 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
     #  8. save model weights to file specified in opt.savename
     #  SEE trainer.py for examples of each of the above
     with tqdm(total=len(dataloader), desc='Training Progress') as progress:
-        for i, (src, tgt) in enumerate(dataloader):
-            src : torch.Tensor = src.to(device)
-            tgt : torch.Tensor = tgt.to(device)
-            srcmask = create_mask(src, 0, make_masked=False)
-            #remove frist token from the model because the output of the model is just going to be predicting it anyways
-            input_target = tgt[:, :-1]
-            tgtmask = create_mask(input_target, 0, make_masked=True)
-
-            preds : torch.Tensor = model(src=src,trg=input_target,src_mask=srcmask, trg_mask=tgtmask)
-            preds = preds.view(-1, preds.size(-1))
-            true_output = tgt[:, 1:].contiguous().view(-1)
-            loss = loss_func(preds, true_output)
+        for i, input in enumerate(dataloader):
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            tgt : torch.Tensor = input.to(device)
+            input_tokens = tgt[:, :-1]
+            mask = create_mask(input_tokens, 0, make_masked=True)
+
+            s = time.perf_counter()
+            preds : torch.Tensor = model(input_tokens=input_tokens, mask=mask).permute(0, 2, 1)
+            e = time.perf_counter()
+            print('time to do inference: ', e-s)
+            # preds = preds.view(-1, preds.size(-1))
+            # true_output = tgt[:, 1:].contiguous().view(-1)
+            true_output = tgt[:, 1:]
+            print('preds: ', preds)
+            print('preds size: ', preds.size())
+            print('true_output: ', true_output)
+            print('true_output size: ', true_output.size())
+            # print("true_ourpur: ", true_output)
+            # print('true_ourpur: ', true_output.size)
+            probs  = F.softmax(preds, dim=-1)
+            loss = loss_func(probs, true_output)
+            # loss.backward()
+            # optimizer.step()
 
 
             progress.set_description(f'Epoch: {epoch}')
             progress.update(1)
             progress.set_postfix({'loss':loss.item()})
-            if verbose:
-                print()
-                print('src view: ', src.size())
-                print('source raw tokens: ', src[0])
-                print('source tokens decoded: ', tokenizer.decode(src[0]))
-                print('tgt view:', tgt.size())
-                print('target raw tokens:  ', tgt[0])
-                print('target tokens decoded: ',tokenizer.decode(tgt[0]))
-                memory_size = src.element_size() * src.nelement()
-                memory_size_mb = memory_size / (1024 ** 2)
-                print(f"Source Batch size in memory: {memory_size_mb:.2f} MB")
-                memory_size = tgt.element_size() * tgt.nelement()
-                memory_size_mb = memory_size / (1024 ** 2)
-                print(f"Target Batch size in memory: {memory_size_mb:.2f} MB")
         if savepath:
             torch.save(model.state_dict(), f"{str(savepath)}{time.strftime('%H-%M-%S')}" )
     # nopeak_mask =
@@ -112,13 +106,11 @@ def test_model(model, dataloader: DataLoader, device:str, verbose=False):
     print('inside perplexity')
     model.eval()
     metric = Perplexity(ignore_index=0,device='cuda:0')
-    for i, (src, tgt) in enumerate(dataloader):
-        src : torch.Tensor = src.to(device)
-        tgt : torch.Tensor = tgt.to(device)
-        srcmask = create_mask(src, 0, make_masked=False)
-        input_target = tgt[:, :-1]
-        tgtmask = create_mask(input_target, 0, make_masked=True)
-        preds : torch.Tensor = model(src=src,trg=input_target,src_mask=srcmask, trg_mask=tgtmask)
+    for i, input in enumerate(dataloader):
+        tgt : torch.Tensor = input.to(device)
+        input_tokens = tgt[:, :-1]
+        tgtmask = create_mask(input_tokens, 0, make_masked=True)
+        preds : torch.Tensor = model(input_tokens=input_tokens, mask=tgtmask)
         true_output = tgt[:, 1:].contiguous()
         metric.update(preds,true_output)
     if not i%1000:
@@ -172,7 +164,7 @@ def main():
     dir_name = dir_name + "//"
     opt.dir_name = dir_name
     #copy the python file at benging of run time???
-    shutil.copy(source_name,dir_name + source_name) 
+    shutil.copy(source_name,dir_name + source_name)
     opt.log_file = dir_name + "log_file.txt"
     opt.train = read_corpus(Path('.') / 'data'/ 'wiki2.train.txt',tokenizer)
     opt.valid = read_corpus(Path('.') /'data'/ 'wiki2.valid.txt',tokenizer)
