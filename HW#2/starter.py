@@ -46,7 +46,7 @@ def get_model(opt : argparse.Namespace, src_vocab_size:int, trg_vocab_size:int) 
 
 
 @time_it
-def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim.Adam,loss_func: F.cross_entropy, epoch:int, batchsize:int, device:str,savepath:Path=None, verbose:bool=True):
+def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim.Adam,loss_func: F.cross_entropy, epoch:int, batchsize:int, vocab_size:int, device:str,savepath:Path=None, verbose:bool=True):
     
     print("training model...")
     model.train()
@@ -64,28 +64,55 @@ def train_model(model :nn.Module, dataloader: DataLoader, optimizer: torch.optim
     #  SEE trainer.py for examples of each of the above
     with tqdm(total=len(dataloader), desc='Training Progress') as progress:
         for i, input in enumerate(dataloader):
-            optimizer.zero_grad()
             tgt : torch.Tensor = input.to(device)
             input_tokens = tgt[:, :-1]
             mask = create_mask(input_tokens, 0, make_masked=True)
-
-            s = time.perf_counter()
-            preds : torch.Tensor = model(input_tokens=input_tokens, mask=mask).permute(0, 2, 1)
-            e = time.perf_counter()
-            print('time to do inference: ', e-s)
+            preds : torch.Tensor = model(input_tokens=input_tokens, mask=mask).permute(0,2,1)
+            # print('time to do inference: ', e-s)
             # preds = preds.view(-1, preds.size(-1))
             # true_output = tgt[:, 1:].contiguous().view(-1)
             true_output = tgt[:, 1:]
-            print('preds: ', preds)
-            print('preds size: ', preds.size())
-            print('true_output: ', true_output)
-            print('true_output size: ', true_output.size())
+
+
+            #unoptimized python code
+            # batchsize, seq_len = true_output.size(0), true_output.size(1)
+
+            # # print('true output size: ', true_output.size())
+
+            # one_hot_true_output = torch.zeros((batchsize,seq_len,vocab_size)).cuda()
+
+            # for i in range(batchsize):
+            #     for j in range(seq_len):
+            #         one_hot_true_output[i,j,true_output[j]] = 1
+
+            # print('one_hot_true_output: ', one_hot_true_output)
+            # print('one_hot_true_output size: ', one_hot_true_output.size())
+
+
+
+            #pytorch functions
+
+            # one_hot_true_output = F.one_hot(true_output, num_classes=vocab_size)
+            # print('one_hot_true_output: ', one_hot_true_output)
+            # print('one_hot_true_output size: ', one_hot_true_output.size())
+
+
+            # print('preds: ', preds)
+            # print('preds size: ', preds.size())
+            # print('true_output: ', true_output)
+            # print('true_output size: ', true_output.size())
             # print("true_ourpur: ", true_output)
-            # print('true_ourpur: ', true_output.size)
+            # print('true_ourpur: ', true_output.size())
             probs  = F.softmax(preds, dim=-1)
+
+            # # manual cross_entropy
+            # log_out = one_hot_true_output * torch.log(probs)
+            # loss = (-log_out).sum()
+            # print('loss: ', loss)
             loss = loss_func(probs, true_output)
-            # loss.backward()
-            # optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
 
             progress.set_description(f'Epoch: {epoch}')
@@ -199,7 +226,7 @@ def main():
     opt.trg_pad = 0
     perplexity = []
     for epoch in range(opt.epochs):
-        train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, device=opt.device, savepath=(Path(os.path.abspath(__file__)).parent / 'saved' / 'model' / f'{opt.savename}'))
+        train_model(model,train_dataset, loss_func= F.cross_entropy, epoch=1, batchsize=opt.batchsize, optimizer=optimizer, vocab_size=opt.vocab_size, device=opt.device, savepath=(Path(os.path.abspath(__file__)).parent / 'saved' / 'model' / f'{opt.savename}'))
         perplexity.append(test_model(model,test_dataset, device=opt.device))
         print('current perplexity: ', perplexity)
 

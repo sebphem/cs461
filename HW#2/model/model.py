@@ -70,7 +70,7 @@ class Norm(nn.Module):
 
 def attention(q:torch.Tensor, k:torch.Tensor, v:torch.Tensor, d_k:torch.Tensor, mask:torch.Tensor=None, dropout=None):
     
-    scores = torch.sum((q.unsqueeze(-2)- k.unsqueeze(-3))**2,dim=-1) /  math.sqrt(d_k)
+    scores = torch.matmul(q,k.transpose(-2,-1)) / math.sqrt(d_k)
     
     if mask is not None:
         mask = mask.unsqueeze(1)

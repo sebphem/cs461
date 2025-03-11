@@ -1,0 +1,1 @@
+python .\starter.py -batchsize 64 -d_model 100 -loadname 01-42-55bengio.state

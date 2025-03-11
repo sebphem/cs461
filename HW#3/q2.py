@@ -68,7 +68,7 @@ def train_model(model:GPT2LMHeadModel, tokenizer: GPT2Tokenizer, dataset: list[l
 
             if i%100==0:
                 progress.set_description(f'Training Epoch: {epoch}')
-                progress.update(1)
+                progress.update(100)
                 progress.set_postfix({'loss':loss.item()})
             if verbose and i%200==0:
                 print('sample: ', sample)
@@ -154,7 +154,7 @@ def main():
     epochs = 10
     for i in range(1,epochs+1):
         acc_epoch.append(test_model(model=model,tokenizer=tokenizer,dataset=valid, epoch=0,verbose=True))
-        loss_epoch.append(train_model(model=model,tokenizer=tokenizer,dataset=test, optimizer=optimizer,epoch=0,savename='q2',verbose=False))
+        loss_epoch.append(train_model(model=model,tokenizer=tokenizer,dataset=train, optimizer=optimizer,epoch=0,savename='q2',verbose=False))
 
     print('acc_epoch: ', acc_epoch)
     print('loss_epoch: ', loss_epoch)

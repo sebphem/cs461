@@ -67,20 +67,18 @@ def read_corpus(file_name:Path|str,vocab: list[str],words:dict[str:[int,int]],
 
     return [vocab,words,corpus,rev_words]
 
-def view_example_sentences(f_path:Path, vocab:list[str], words:dict[str:[int,int]], n_ex:int=-1):
+def encode_example_sentences(f_path:Path, vocab:list[str], words:dict[str:[int,int]], n_ex:int=-1):
     examples = []
     with open(f_path,'rt', encoding='utf-8') as f:
         for i,line in enumerate(f):
-            if i == n_ex:
-                break
             line = line.replace('\n','')
             encoded = encode(line,words)
             text = ' '.join([f"{vocab[encoded[i]]}" for i in range(len(encoded))])
 
             examples.append(encoded)
-            print('original: %s' % line)
-            print('encoded:  %s' % text)
-            print(' ')
+            # print('original: %s' % line)
+            # print('encoded:  %s' % text)
+            # print(' ')
     return examples
 
 
@@ -96,5 +94,5 @@ def encode(text:str, words:dict[str:[int,int]]):
     return encoded
 
 def decode(text:list[int], rev_words:dict[int:str]):
-    decoded = ''.join([rev_words[i] for i in range(len(text))])
+    decoded = ' '.join([rev_words[text[i]] for i in range(len(text))])
     return decoded

@@ -1,0 +1,42 @@
+Example setnence perplexity
+Input sentence:          The game began development in 2010 , carrying over a large portion of the work done on Valkyria Chronicles II . While it retained the standard features of the series , it also underwent multiple adjustments , such as making the game more <unk> for series newcomers .
+Reconstructed sentence:  <unk> <unk> of to to the . and , the <unk> @-@ of the <unk> of . the 's , , The the was the <unk> of of the <unk> , the was a the <unk> . and as the a first , than , the . .
+Perplexity: 393.6
+
+Input sentence:          Its story was darker and more somber than that of its predecessor . The majority of material created for previous games , such as the <unk> system and the design of maps , was carried over .
+Reconstructed sentence:  <unk> , , <unk> by the than . the the the own .  first of the and in the years . and as the <unk> <unk> , the <unk> of the . and released in the
+Perplexity: 291.7
+
+Input sentence:          This was followed by a starring role in the play Herons written by Simon Stephens , which was performed in 2001 at the Royal Court Theatre . He portrayed an emergency physician applying for a medical <unk> .
+Reconstructed sentence:  <unk> <unk> a by the <unk> of of the <unk> of , . the to , and was a in the , the time @-@ of .  also to <unk> to in to the new of ,
+Perplexity: 463.5
+
+Input sentence:          In 1948 , <unk> was drafted by the Philadelphia Eagles in the 15th round of the NFL draft , and he was also drafted by the New York Yankees of the All @-@ America Football Conference .
+Reconstructed sentence:  <unk> <unk> , and , a to the <unk> of , the United of , the <unk> . , and the was not to to the <unk> York , , the <unk> @-@ year @-@ League to The
+Perplexity: 229.1
+
+Input sentence:          Albert Einstein ; 14 March 1879 - 18 April 1955 was a German - born theoretical physicist who is best known for developing the theory of relativity .
+Reconstructed sentence:  <unk> <unk> , <unk> @-@ <unk> , the , and , not first of , , , , had a to as the , <unk> , the ,
+Perplexity: 3271.9
+
+Input sentence:          Large language models , currently their most advanced form , are a combination of larger <unk> <unk> using words <unk> from the public <unk> , <unk> neural networks , and <unk> . They have superseded recurrent neural <unk> models , which had previously superseded the pure statistical models , such as word <unk> language model .
+Reconstructed sentence:  <unk> <unk> , , the , <unk> of of of and known <unk> of the . and , <unk> , , the <unk> , , which , , , and the ,  were been that and <unk> , , the was been a and <unk> of of , the as the , , , ,
+Perplexity: 856.6
+
+Input sentence:          Voice : What happened ? Han Solo : [ getting nervous ] <unk> we had a slight weapons <unk> , but uh . . . everything 's perfectly all right now . We ' re fine . We ' re all fine here now , thank you . How are you ? Voice : We ' re sending a squad up . Han Solo : Uh , uh . . . negative , negative . We had a reactor leak here now . Give us a few minutes to lock it down . Large leak , very dangerous . Voice : 
+Who is this ? What 's your operating number ?
+Reconstructed sentence:  <unk> ,  , , <unk> , ,  the ] , that , , been <unk> of of in and the to The  The , <unk> , the , ,  was , @-@ , The was first @-@ the . . <unk> the , , The , also to , ,  , , @-@ , " of to  , ,  , and , The  The was the ,  was been been of , , known The was the <unk> years . the the , to The 's that the <unk> ,  ,  , a to " of <unk> of , of
+Perplexity: 3063.6
+
+Input sentence:          <unk> : This is your last chance . After this , there is no turning back . You take the blue pill - the story ends , you wake up in your bed and believe whatever you want to believe . You take the red pill - you stay in Wonderland and I show you how deep the <unk> hole goes .
+Reconstructed sentence:  <unk> <unk> <unk> <unk> a <unk> to of  the time the was a @.@ of to  is 't <unk> of on the <unk> of , the in of the the , , the . the to . the the  , the <unk> , , the . , the , the . . . the the <unk> of . .
+Perplexity: 972.5
+
+Input sentence:          The Large <unk> <unk> <unk> ) is the world 's largest and <unk> particle <unk> . It was built  <unk> <unk> <unk>  <unk> for  <unk> <unk> <unk> ) between  <unk> and  <unk> in collaboration with over  <unk> , <unk> scientists and hundreds of universities and laboratories across  <unk> <unk> <unk> <unk> .
+Reconstructed sentence:  <unk> <unk> <unk> , <unk> <unk> , a <unk> of <unk> . the <unk> . <unk>  is also by  , <unk> ,  <unk> the  , , , , the  and <unk>  , the , the the  , and , , <unk> @-@ the . the . the  , , , (
+Perplexity: 205.9
+
+sent_int:  [10, 10, 10, 10, 14, 10, 17, 10, 23, 210, 10, 14, 18, 10, 10, 153, 14, 18, 14, 18, 38, 18, 18, 10, 14, 18, 14, 1, 14, 17, 14, 132, 18, 14, 18, 16, 14, 10, 10, 14, 10, 10, 10]
+Input sentence:          <unk> : One day the <unk> are going to <unk> <unk> on us the same way we look at fossil skeletons on the <unk> of <unk> . An upright <unk> living in dust with crude <unk> and <unk> <unk> <unk> <unk> extinction .
+Reconstructed sentence:  <unk> <unk> <unk> <unk> , <unk> of <unk> to be <unk> , the <unk> <unk> year , the , the and the the <unk> , the ,  , of , was the , the . , <unk> <unk> , <unk> <unk> <unk>
+Perplexity: 283.1
